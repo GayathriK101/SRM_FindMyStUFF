@@ -1,4 +1,4 @@
-# SRM Lost & Found Hub
+# SRM FindMyStuff
 
 A centralized platform for SRM Institute of Science and Technology students to report, track, and recover lost items on campus.
 
