@@ -4,7 +4,7 @@ A centralized platform for SRM Institute of Science and Technology students to r
 
 ## About
 
-SRM Lost & Found Hub was built to solve a real problem faced by thousands of students on campus every day. Traditional methods of finding lost items — notice boards, word of mouth, WhatsApp groups — are inefficient and unreliable. This platform provides a structured, verified, and transparent system for the entire campus community.
+SRM FindMyStuf was built to solve a real problem faced by thousands of students on campus every day. Traditional methods of finding lost items — notice boards, word of mouth, WhatsApp groups — are inefficient and unreliable. This platform provides a structured, verified, and transparent system for the entire campus community.
 
 ## Features
 
