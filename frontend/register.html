@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - SRM FindMyStuff</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="api.js"></script>
+  <script>renderNavbar();</script>
+
+  <div class="container">
+    <div class="form-container">
+      <h2 class="text-center">Create an Account</h2>
+      <form id="registerForm">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="number" id="phone" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select id="role" class="form-control">
+            <option value="student">Student</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
+      </form>
+      <p class="text-center" style="margin-top: 1rem; font-size: 0.9rem;">
+        Already have an account? <a href="login.html">Login here</a>.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
+      const role = document.getElementById('role').value;
+      
+      try {
+        await fetchAPI('/register', {
+          method: 'POST',
+          body: JSON.stringify({ name, email, phone, role })
+        });
+        alert('Registration successful! Please login.');
+        window.location.href = 'login.html';
+      } catch (err) {
+      }
+    });
+  </script>
+</body>
+</html>

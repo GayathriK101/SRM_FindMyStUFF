@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SRM FindMyStuff</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="api.js"></script>
+  <script>renderNavbar();</script>
+
+  <section class="hero">
+    <h1>SRM FindMyStuff</h1>
+    <p>A centralized platform to report, find, and claim lost items across the campus. Join hands to build a helpful community.</p>
+    <div class="hero-actions" id="hero-actions">
+      <a href="report-lost.html" class="btn btn-primary">I Lost Something</a>
+      <a href="report-found.html" class="btn btn-outline" style="color: white; border-color: white;">I Found Something</a>
+    </div>
+  </section>
+
+  <div class="container">
+    <h2 class="text-center">Recently Lost Items</h2>
+    <div class="grid" id="recent-lost-grid">
+      <!-- Cards go here -->
+    </div>
+  </div>
+
+  <script>
+    async function loadRecentLost() {
+      try {
+        const reports = await fetchAPI('/lost-reports');
+        const grid = document.getElementById('recent-lost-grid');
+        // Show only latest 6 items
+        const recent = reports.slice(0, 6);
+        if(recent.length === 0) {
+          grid.innerHTML = '<p class="text-center" style="grid-column: 1 / -1;">No recent lost items found.</p>';
+          return;
+        }
+
+        grid.innerHTML = recent.map(r => `
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">${r.item_name}</h3>
+              <span class="badge badge-${r.status}">${r.status}</span>
+            </div>
+            <div class="card-body">
+              <p><strong>Category:</strong> ${r.category_name}</p>
+              <p><strong>Location:</strong> ${r.location_name}</p>
+              <p><strong>Lost on:</strong> ${new Date(r.lost_date).toLocaleDateString()} at ${r.lost_time}</p>
+              <p><strong>Description:</strong> ${r.description}</p>
+            </div>
+            <div class="card-footer">
+               <a href="lost-items.html" class="btn btn-outline" style="width: 100%; text-align: center; display: block;">View Details</a>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = getUser();
+      if(!user) {
+         document.getElementById('hero-actions').innerHTML = `
+           <a href="login.html" class="btn btn-primary">Login to Report</a>
+           <a href="register.html" class="btn btn-outline" style="color: white; border-color: white;">Register</a>
+         `;
+      }
+      loadRecentLost();
+    });
+  </script>
+</body>
+</html>

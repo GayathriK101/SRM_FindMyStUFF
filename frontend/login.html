@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - SRM FindMyStuff</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="api.js"></script>
+  <script>renderNavbar();</script>
+
+  <div class="container">
+    <div class="form-container">
+      <h2 class="text-center">Welcome Back</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select id="role" class="form-control">
+            <option value="student">Student</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+      </form>
+      <p class="text-center" style="margin-top: 1rem; font-size: 0.9rem;">
+        Don't have an account? <a href="register.html">Register here</a>.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const role = document.getElementById('role').value;
+      
+      try {
+        const data = await fetchAPI('/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, role })
+        });
+        localStorage.setItem('user', JSON.stringify(data.user));
+        window.location.href = 'index.html';
+      } catch (err) {
+        // Error already handled in fetchAPI
+      }
+    });
+  </script>
+</body>
+</html>

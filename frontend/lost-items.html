@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lost Items - SRM FindMyStuff</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="api.js"></script>
+  <script>renderNavbar();</script>
+
+  <div class="container">
+    <h1 class="text-center">Lost Items Directory</h1>
+    <div class="grid" id="items-grid">
+      <!-- Cards go here -->
+    </div>
+  </div>
+
+  <!-- Claim Modal -->
+  <div id="claimModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 8px; width: 400px; max-width: 90%;">
+      <h3>Submit Claim</h3>
+      <div class="form-group">
+        <label class="form-label">Remarks</label>
+        <textarea id="claimRemarks" class="form-control" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Proof Image (ID, Receipt, etc.)</label>
+        <input type="file" id="claimProof" class="form-control" accept="image/*">
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+        <button onclick="document.getElementById('claimModal').style.display='none'" class="btn btn-outline">Cancel</button>
+        <button id="submitClaimBtn" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentClaimLostId = null;
+
+    function openClaimModal(lostId) {
+      const user = getUser();
+      if (!user) {
+        alert("Please login first to claim an item.");
+        window.location.href = 'login.html';
+        return;
+      }
+      currentClaimLostId = lostId;
+      document.getElementById('claimRemarks').value = '';
+      document.getElementById('claimProof').value = '';
+      document.getElementById('claimModal').style.display = 'flex';
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Setup submit claim listener
+      document.getElementById('submitClaimBtn').addEventListener('click', async () => {
+        const remarks = document.getElementById('claimRemarks').value;
+        const proofFile = document.getElementById('claimProof').files[0];
+        const user = getUser();
+        
+        try {
+          const result = await fetchAPI('/claims', {
+            method: 'POST',
+            body: JSON.stringify({
+              lost_id: currentClaimLostId,
+              found_id: null,
+              claimed_by: user.user_id,
+              remarks: remarks
+            })
+          });
+          
+          if (proofFile) {
+            const formData = new FormData();
+            formData.append('claim_id', result.id);
+            formData.append('user_id', user.user_id);
+            formData.append('image', proofFile);
+            await fetch('http://localhost:5000/api/upload-credential', {
+              method: 'POST',
+              body: formData
+            });
+          }
+          
+          alert('Claim submitted successfully! It is pending admin verification.');
+          window.location.reload();
+        } catch (err) {}
+      });
+      try {
+        const reports = await fetchAPI('/lost-reports');
+        const grid = document.getElementById('items-grid');
+        
+        if(reports.length === 0) {
+          grid.innerHTML = '<p class="text-center" style="grid-column: 1 / -1;">No lost items reported yet.</p>';
+          return;
+        }
+
+        grid.innerHTML = reports.map(r => `
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">${r.item_name}</h3>
+              <span class="badge badge-${r.status}">${r.status}</span>
+            </div>
+            <div class="card-body">
+              ${r.image_path ? `<img src="http://localhost:5000${r.image_path}" style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--border-radius); margin-bottom: 1rem;">` : ''}
+              <p><strong>Reported by:</strong> ${r.user_name}</p>
+              <p><strong>Category:</strong> ${r.category_name}</p>
+              <p><strong>Location:</strong> ${r.location_name}</p>
+              <p><strong>Lost on:</strong> ${new Date(r.lost_date).toLocaleDateString()} at ${r.lost_time}</p>
+              <p><strong>Description:</strong> ${r.description}</p>
+            </div>
+            <div class="card-footer">
+               ${r.status === 'open' ? 
+                 `<button onclick="openClaimModal(${r.lost_id})" class="btn btn-primary" style="width: 100%;">Claim This Item</button>` : 
+                 `<button class="btn btn-outline" style="width: 100%;" disabled>${r.status.toUpperCase()}</button>`
+               }
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {}
+    });
+  </script>
+</body>
+</html>

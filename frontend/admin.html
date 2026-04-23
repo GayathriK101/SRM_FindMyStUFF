@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - SRM FindMyStuff</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="api.js"></script>
+  <script>
+    const user = requireAuth();
+    if (user.role !== 'admin') {
+      alert("Access denied. Admins only.");
+      window.location.href = 'index.html';
+    }
+    renderNavbar();
+  </script>
+
+  <div class="container">
+    <h1>Admin Dashboard</h1>
+    
+    <section style="margin-bottom: 3rem;">
+      <h2>Pending Claims</h2>
+      <div class="table-wrapper">
+        <table id="claims-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Item Name</th>
+              <th>Claimed By</th>
+              <th>Remarks</th>
+              <th>Proof Image</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Claims will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>System Audit Log</h2>
+      <div class="table-wrapper">
+        <table id="audit-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Table</th>
+              <th>Record ID</th>
+              <th>Action</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Audit logs will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    async function updateClaim(claimId, status) {
+      try {
+        await fetchAPI(`/claims/${claimId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ 
+            status: status,
+            admin_id: user.user_id 
+          })
+        });
+        alert(`Claim ${status} successfully!`);
+        
+        // Update DOM without reload
+        const row = document.getElementById(`claim-row-${claimId}`);
+        if (row) {
+          const statusCell = row.querySelector('.status-cell');
+          statusCell.innerHTML = `<span class="badge badge-${status}">${status}</span>`;
+          const actionsCell = row.querySelector('.actions-cell');
+          actionsCell.innerHTML = '-';
+        }
+      } catch (err) {}
+    }
+
+    async function loadData() {
+      try {
+        // Load Claims
+        const claims = await fetchAPI('/claims');
+        const claimsBody = document.querySelector('#claims-table tbody');
+        claimsBody.innerHTML = claims.map(c => `
+          <tr id="claim-row-${c.claim_id}">
+            <td>${c.claim_id}</td>
+            <td>${c.lost_item_name || 'Found Item Claim'}</td>
+            <td>${c.claimed_by_name} (${c.claimed_by_email})</td>
+            <td>${c.remarks}</td>
+            <td>
+              ${c.proof_image ? `<a href="http://localhost:5000${c.proof_image}" target="_blank"><img src="http://localhost:5000${c.proof_image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></a>` : 'No Image'}
+            </td>
+            <td class="status-cell"><span class="badge badge-${c.status}">${c.status}</span></td>
+            <td class="actions-cell">
+              ${c.status === 'pending' ? `
+                <button onclick="updateClaim(${c.claim_id}, 'verified')" class="btn btn-success btn-sm">Verify</button>
+                <button onclick="updateClaim(${c.claim_id}, 'rejected')" class="btn btn-danger btn-sm">Reject</button>
+              ` : '-'}
+            </td>
+          </tr>
+        `).join('');
+
+        // Load Audit Log
+        const logs = await fetchAPI('/audit-log');
+        const auditBody = document.querySelector('#audit-table tbody');
+        auditBody.innerHTML = logs.map(l => `
+          <tr>
+            <td>${l.log_id}</td>
+            <td>${l.table_name}</td>
+            <td>${l.record_id}</td>
+            <td>${l.action_type}</td>
+            <td>${new Date(l.action_date).toLocaleString()}</td>
+          </tr>
+        `).join('');
+      } catch (err) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', loadData);
+  </script>
+</body>
+</html>

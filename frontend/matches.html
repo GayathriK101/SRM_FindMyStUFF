@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Potential Matches - SRM FindMyStuff</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="api.js"></script>
+  <script>
+    const user = requireAuth();
+    renderNavbar();
+  </script>
+
+  <div class="container">
+    <h1 class="text-center">Potential Item Matches</h1>
+    <p class="text-center" style="color: var(--text-muted); margin-bottom: 2rem;">Items with the same category and location are listed here as potential matches.</p>
+    
+    <div id="matches-list">
+      <!-- Matches will be loaded here -->
+    </div>
+  </div>
+
+  <script>
+    async function loadMatches() {
+      try {
+        const matches = await fetchAPI('/match');
+        const container = document.getElementById('matches-list');
+        
+        if (matches.length === 0) {
+          container.innerHTML = '<p class="text-center">No potential matches found at this time.</p>';
+          return;
+        }
+
+        container.innerHTML = matches.map(m => `
+          <div class="match-container">
+            <div class="match-half">
+              <span class="badge badge-open">LOST REPORT</span>
+              <h3 style="margin-top: 0.5rem;">${m.lost_item}</h3>
+              <p><strong>Category:</strong> ${m.category_name}</p>
+              <p><strong>Location:</strong> ${m.location_name}</p>
+            </div>
+            <div class="match-divider">VS</div>
+            <div class="match-half">
+              <span class="badge badge-claimed">FOUND REPORT</span>
+              <h3 style="margin-top: 0.5rem;">${m.found_item}</h3>
+              <p><strong>Category:</strong> ${m.category_name}</p>
+              <p><strong>Location:</strong> ${m.location_name}</p>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadMatches);
+  </script>
+</body>
+</html>

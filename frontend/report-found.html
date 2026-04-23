@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Report Found Item - SRM FindMyStuff</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="api.js"></script>
+  <script>const user = requireAuth(); renderNavbar();</script>
+
+  <div class="container">
+    <div class="form-container">
+      <h2 class="text-center">Report a Found Item</h2>
+      <form id="reportFoundForm">
+        <div class="form-group">
+          <label class="form-label">Item Name</label>
+          <input type="text" id="item_name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="category_id" class="form-control" required>
+            <option value="">Select Category</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location Found</label>
+          <select id="location_id" class="form-control" required>
+            <option value="">Select Location</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Found Date</label>
+          <input type="date" id="found_date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Found Time</label>
+          <input type="time" id="found_time" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="description" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Image (Optional)</label>
+          <input type="file" id="image" class="form-control" accept="image/*">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Report</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const categories = await fetchAPI('/categories');
+        const locations = await fetchAPI('/locations');
+        
+        document.getElementById('category_id').innerHTML += categories.map(c => `<option value="${c.category_id}">${c.category_name}</option>`).join('');
+        document.getElementById('location_id').innerHTML += locations.map(l => `<option value="${l.location_id}">${l.location_name}</option>`).join('');
+      } catch(e) {}
+    });
+
+    document.getElementById('reportFoundForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        user_id: user.user_id,
+        item_name: document.getElementById('item_name').value,
+        category_id: document.getElementById('category_id').value,
+        location_id: document.getElementById('location_id').value,
+        found_date: document.getElementById('found_date').value,
+        found_time: document.getElementById('found_time').value,
+        description: document.getElementById('description').value
+      };
+      
+      try {
+        const result = await fetchAPI('/found-reports', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        
+        const imageFile = document.getElementById('image').files[0];
+        if (imageFile) {
+          const formData = new FormData();
+          formData.append('found_id', result.id);
+          formData.append('image', imageFile);
+          await fetch('http://localhost:5000/api/upload-found-image', {
+            method: 'POST',
+            body: formData
+          });
+        }
+        
+        alert('Found report submitted successfully!');
+        window.location.href = 'found-items.html';
+      } catch (err) {}
+    });
+  </script>
+</body>
+</html>
